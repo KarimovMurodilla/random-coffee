@@ -1,0 +1,4 @@
+aiogram==2.22.2
+environs==9.5.0
+gspread==5.7.2
+SQLAlchemy==1.4.35
