@@ -2,7 +2,7 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.builtin import CommandStart
 
-from loader import dp, db, gs
+from loader import dp, db
 from states.reg import Reg
 from keyboards.inline import inline_buttons
 from keyboards.default import keyboard_buttons
@@ -11,75 +11,113 @@ from keyboards.default import keyboard_buttons
 @dp.message_handler(CommandStart(), state='*')
 async def bot_start(message: types.Message, state: FSMContext):
     await state.finish()
-    user = db.get_user(message.from_user.id)
-
-    if not user:
-        await message.answer("Привет! Введите своё имя")
-        await Reg.step1.set()
-    
-    else:
-        await message.answer(f"Привет {user.name}!")
+    await message.answer(f"Давай заполним твой профиль? Твоё имя {message.from_user.first_name}",
+        reply_markup=keyboard_buttons.check_name()
+    )
+    await Reg.check_name.set()
 
 
-@dp.message_handler(state=Reg.step1)
-async def get_name(message: types.Message, state: FSMContext):
+@dp.message_handler(state=Reg.check_name)
+async def process_check_name(message: types.Message, state: FSMContext):
+    if message.text == 'Верно':
+        async with state.proxy() as data:
+            data['name'] = message.from_user.first_name
+
+
+        msg = await message.answer('ㅤ', reply_markup=types.ReplyKeyboardRemove())
+        await msg.delete()
+
+        user_id = message.from_user.id
+        text = "Славно! А теперь выбери страну (или несколько), в которой находишься. Пока могу предложить небольшой выбор. Но это временно 😉"
+        await message.answer(text, reply_markup=inline_buttons.show_countries(user_id))
+        await Reg.get_country.set()
+
+
+    elif message.text == 'Исправить':
+        text = "Упс, введи своё верное имя"
+        await message.answer(text)
+        await Reg.change_name.set()
+
+
+@dp.message_handler(state=Reg.change_name)
+async def process_change_name(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['name'] = message.text
 
-    await message.answer("Здорово! Теперь свой ник в запрещённой сети инстаграм 😉")
+    user_id = message.from_user.id
+    text = "Славно! А теперь выбери страну (или несколько), в которой находишься. Пока могу предложить небольшой выбор. Но это временно 😉"
+    await message.answer(text, reply_markup=inline_buttons.show_countries(user_id))
     await Reg.next()
 
 
-@dp.message_handler(state=Reg.step2)
-async def get_insta(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['insta'] = message.text
+@dp.callback_query_handler(state=Reg.get_country)
+async def process_get_country(c: types.CallbackQuery, state: FSMContext):
+    country = c.data
+    user_id = c.from_user.id
 
-    await message.answer("Ваш номер телефона", reply_markup=keyboard_buttons.send_contact())
+    await c.message.answer("Ещё мне нужно знать, в каком ты городе. Ты можешь выбрать несколько городов для офлайн встреч, например",
+        reply_markup=inline_buttons.show_places(country, user_id)
+    )
     await Reg.next()
 
 
-@dp.message_handler(content_types='contact',state=Reg.step3)
-async def get_contact(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        name = data['name']
-        insta = data['insta']
-        contact = message.contact.phone_number
-        user_id = message.from_user.id
-        username = message.from_user.username
+@dp.callback_query_handler(state=Reg.get_place)
+async def process_get_country(c: types.CallbackQuery, state: FSMContext):
+    place = c.data
+    user_id = c.from_user.id
 
-    db.reg_user(user_id, username, name, insta, contact)
+    if place == 'ДРУГОЕ':
+        await c.message.answer("Да ладно! Что я пропустил? Окей, введи город в строке ниже. Пример: Эйлат")
+        await Reg.get_place_by_hand.set()
     
-    row = db.get_row_count()
-    line = row + 1
-    gs.update_columns(line, name, insta, contact)
+    else:
+        await c.message.answer("Я не буду открывать тебе свой возраст, а вот тебе придётся. Введи его вот в таком формате: 21.")
+        await Reg.get_age.set()
 
 
-    await message.answer(
-        "Зарегистрировал!\n"
-        "Прежде чем перейти в канал, рекомендую ознакомиться с правилами и безопасностью :)",
-            reply_markup=types.ReplyKeyboardRemove()
-    )
 
-    await message.answer(
-        "Ознакомьтесь с правилами безопасности и нахождения в группе:\n"
-        "🆘Я никому не пишу первый и не прошу перевести деньги на разного рода счета.\n"
-        "🆘У меня нет помощников или партнеров.\n"
-        "🆘Я не предлагаю доверительное управление или участие в посторонних проектах.\n"
-        "🆘Любой график или торговая идея носит только информативный характер и является отображением моих знаний и опыта.\n"
-        "🆘Все Ваши прибыли и потери являются результатом Ваших принятых решений. Любая торговая идея, сценарий, сетап или фундаментальный анализ не призывает Вас открытию сделки. Поэтому ответственность за потери или прибыли полностью на Вас самих.\n"
-        "🆘В канале разрешено комментировать торговые идеи и видео! Будьте максимально вежливыми. Исключение из чата может быть по причине недружественного или оскорбительного поведения.\n"
-        '🆘Не только Вы выбираете чьими услугами пользоваться, но и я выбираю кому их оказывать. Поэтому я оставляю за собой право в любое время по любой причине выдать участнику "mute", исключить его из чата/канала без возврата средств.\n'
-        "🆘Ни при каких обстоятельствах не переводите никому деньги и не давайте ключи от торгового терминала.\n"
-        "🆘Если Вам написали от моего имени или вы не можете со мной связаться - то напишите <a href='https://t.me/ChatSharkSail'>в чат</a> и я лично отвечу в нем, где вы убедитесь подлинности аккаунта благодаря статусу владельца группы!\n\n" 
+@dp.message_handler(state=Reg.get_place_by_hand)
+async def process_get_place_by_hand(message: types.Message, state: FSMContext):
+    place = message.text
 
-        "Ссылка https://telegra.ph/Bezopasnost-01-08",
-            disable_web_page_preview=True
-    )
+    await message.answer("Да ладно! Что я пропустил? Окей, введи город в строке ниже. Пример: Эйлат")
+    await Reg.get_age.set()
 
-    await message.answer(
-        "Не забудьте подписаться на основной канал: https://t.me/SharkSail\n\n", 
-            reply_markup=inline_buttons.pay_and_question()
-        )
 
-    await state.finish()
+@dp.message_handler(state=Reg.get_age)
+async def process_get_age(message: types.Message, state: FSMContext):
+    age = message.text
+
+    if age.isdigit():
+        await message.answer("Расскажи, чем ты занимаешься?", reply_markup=keyboard_buttons.show_jobs())
+        await Reg.next()
+    
+    else:
+        await message.answer("Введи только цифрами!")
+    
+
+@dp.message_handler(state=Reg.get_job)
+async def process_get_job(message: types.Message, state: FSMContext):
+    job = message.text
+    user_id = message.from_user.id
+
+    if job == 'БЛОГЕР':
+        await message.answer("Ты мог выбрать НАХЛЕБНИК. Только не обижайся, сегодня ретроградный меркурий")
+
+    elif job == 'НАХЛЕБНИК':
+        await message.answer("Ты мог выбрать БЛОГЕР. Только не обижайся, сегодня ретроградный меркурий")
+
+    elif job == 'Avon':
+        await message.answer("Скажи честно, тебя мама заставляет? Ладно, не отвечай!")
+
+
+    await message.answer("Теперь выбери сферу или несколько.", reply_markup=inline_buttons.show_spheres(user_id))
+    await Reg.next()
+
+
+@dp.callback_query_handler(state=Reg.get_sphere)
+async def process_get_country(c: types.CallbackQuery, state: FSMContext):
+    sphere = c.data
+    user_id = c.from_user.id
+
+    await c.message.answer("Ну-ка уточни, можешь выбрать несколько:", reply_markup=inline_buttons.show_more_spheres(user_id, sphere))
