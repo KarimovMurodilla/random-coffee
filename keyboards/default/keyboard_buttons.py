@@ -21,3 +21,14 @@ def show_jobs():
     menu.add(btn1, btn2, btn3, btn4, btn5, btn6)
 
     return menu
+
+
+def main_menu():
+    menu = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1, one_time_keyboard=True)
+    btn1 = types.KeyboardButton("Профиль")
+    btn2 = types.KeyboardButton("Поддержка")
+    btn3 = types.KeyboardButton("Настройка")
+    btn4 = types.KeyboardButton("one-click")
+    menu.add(btn1, btn2, btn3, btn4)
+
+    return menu

@@ -12,3 +12,4 @@ class Reg(StatesGroup):
 	get_sphere = State()
 	get_more_spheres = State()
 	other_in_search = State()
+	get_emoji = State()

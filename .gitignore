@@ -132,3 +132,7 @@ dmypy.json
 
 # Databases
 database.db
+
+
+# todo
+TODO.txt

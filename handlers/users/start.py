@@ -1,3 +1,4 @@
+import asyncio
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.builtin import CommandStart
@@ -12,7 +13,6 @@ from keyboards.default import keyboard_buttons
 @dp.message_handler(content_types = 'document', state='*')
 async def bot_start(message: types.Message, state: FSMContext):
     await message.answer_video(message.document.file_id, width=1920, height=1020, supports_streaming=True)
-
 
 
 @dp.message_handler(CommandStart(), state='*')
@@ -154,13 +154,54 @@ async def process_get_more_spheres(c: types.CallbackQuery, state: FSMContext):
         await c.message.answer(response)
 
         if response != 'ДРУГОЕ':
-            await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.")
+            await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
+                reply_markup=inline_buttons.show_emojis(user_id)
+            )
+            await Reg.get_emoji.set()
+
     else:
-        await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.")
+        await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
+            reply_markup=inline_buttons.show_emojis(user_id)
+        )
+        await Reg.get_emoji.set()
+
 
 
 @dp.message_handler(state=Reg.other_in_search)
 async def process_in_search(message: types.Message, state: FSMContext):
     target = message.text
+    user_id = message.from_user.id
 
-    await message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.")
+    await message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
+        reply_markup=inline_buttons.show_emojis(user_id)
+    )
+    await Reg.next()
+
+
+@dp.callback_query_handler(state=Reg.get_emoji)
+async def process_get_emoji(c: types.CallbackQuery, state: FSMContext):
+    emoji = c.data
+    user_id = c.from_user.id
+
+    description = inline_buttons.show_emojis(user_id, emoji)
+    await c.answer(description, show_alert=True)
+
+    await c.message.answer(
+        'Знаешь, я внезапно понял одну вещь… Я уже столько знаю о тебе. Мы как семья, '
+        'я — двоюродный дядя с причудами, который живёт в хижине чудес и о котором ты '
+        'узнал только сегодня 🫀   Ты, возможно, уже хочешь познакомить меня со своими '
+        'друзьями. Так не робей, пришли им ссылку и расскажи, как мы сблизились за короткое время.',
+            reply_markup=inline_buttons.share()
+    )
+
+    await asyncio.sleep(2)
+
+    await c.message.answer("Мы почти закончили. Давай я покажу тебе меню")
+    await c.message.answer(
+        "<b>ПРОФИЛЬ</b> — ни на что не намекаю, но здесь ты сможешь поменять личную информацию о себе. Допустим, скрываясь от повестки.\n\n"
+        "<b>ПОДДЕРЖКА</b> — для связи с НИМ, с его светлостью разработчиком\n\n"
+        "<b>НАСТРОЙКА</b> — ты, конечно, сможешь менять заданные ИМ настройки, но нужно ли тебе это?\n\n"
+        "<a href='https://one-click.site/'>one-click</a> — шикарная возможность выделиться среди всех остальных. Козырнуть навыками, так сказать. А именно заиметь собственный лендинг по цене большого латте с ореховым топингом.",
+            disable_web_page_preview=True,
+            reply_markup=keyboard_buttons.main_menu()
+    )

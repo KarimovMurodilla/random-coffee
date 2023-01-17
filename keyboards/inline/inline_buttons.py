@@ -1,6 +1,6 @@
 from aiogram import types
 from .indicator import show
-from .data import places, spheres
+from .data import places, spheres, emojis_and_answers
 
 def show_countries(user_id):
     menu = types.InlineKeyboardMarkup(row_width=1)
@@ -61,3 +61,26 @@ def show_in_search_buttons():
     menu.add(btn1, btn2, btn3, btn4, btn5)
 
     return menu
+
+
+def show_emojis(user_id, emoji=None):
+    menu = types.InlineKeyboardMarkup(row_width=2)
+    
+    if not emoji:
+        for emoji in emojis_and_answers.get('all_emojis'):
+            btn = types.InlineKeyboardButton(text=show(emoji, user_id), callback_data=emoji)
+            menu.insert(btn)        
+
+    else:
+        return emojis_and_answers.get(emoji)
+
+    return menu
+
+
+def share():
+    text = '@RandomCoffeeBot: Бот для нахождения новых друзей'
+    menu = types.InlineKeyboardMarkup()
+    btn1 = types.InlineKeyboardButton(text="Пригласить", url=f"tg://share?text={text}")
+    menu.add(btn1)
+
+    return menu    
