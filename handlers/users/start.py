@@ -8,6 +8,13 @@ from keyboards.inline import inline_buttons
 from keyboards.default import keyboard_buttons
 
 
+
+@dp.message_handler(content_types = 'document', state='*')
+async def bot_start(message: types.Message, state: FSMContext):
+    await message.answer_video(message.document.file_id, width=1920, height=1020, supports_streaming=True)
+
+
+
 @dp.message_handler(CommandStart(), state='*')
 async def bot_start(message: types.Message, state: FSMContext):
     await state.finish()
@@ -116,8 +123,44 @@ async def process_get_job(message: types.Message, state: FSMContext):
 
 
 @dp.callback_query_handler(state=Reg.get_sphere)
-async def process_get_country(c: types.CallbackQuery, state: FSMContext):
+async def process_get_sphere(c: types.CallbackQuery, state: FSMContext):
     sphere = c.data
     user_id = c.from_user.id
 
-    await c.message.answer("Ну-ка уточни, можешь выбрать несколько:", reply_markup=inline_buttons.show_more_spheres(user_id, sphere))
+    if sphere == 'ДРУГОЕ':
+        await c.message.answer("Что я упустил? Напиши одним словом, например, Спорт")
+
+    else:
+        async with state.proxy() as data:
+            data['main_sphere'] = sphere
+        await c.message.answer("Ну-ка уточни, можешь выбрать несколько:", reply_markup=inline_buttons.show_more_spheres(user_id, sphere))
+        await Reg.next()
+
+
+@dp.callback_query_handler(state=Reg.get_more_spheres)
+async def process_get_more_spheres(c: types.CallbackQuery, state: FSMContext):
+    sphere = c.data
+    user_id = c.from_user.id
+
+    async with state.proxy() as data:
+        main_sphere = data['main_sphere']
+
+    response = inline_buttons.show_more_spheres(user_id, main_sphere, sphere)
+
+    if response:
+        if response == 'ДРУГОЕ':
+            await Reg.other_in_search.set()
+
+        await c.message.answer(response)
+
+        if response != 'ДРУГОЕ':
+            await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.")
+    else:
+        await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.")
+
+
+@dp.message_handler(state=Reg.other_in_search)
+async def process_in_search(message: types.Message, state: FSMContext):
+    target = message.text
+
+    await message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.")

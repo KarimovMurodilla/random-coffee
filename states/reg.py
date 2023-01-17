@@ -10,3 +10,5 @@ class Reg(StatesGroup):
 	get_age = State()
 	get_job = State()
 	get_sphere = State()
+	get_more_spheres = State()
+	other_in_search = State()

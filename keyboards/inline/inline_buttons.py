@@ -37,11 +37,27 @@ def show_spheres(user_id):
     return menu
 
 
-def show_more_spheres(user_id, sphere):
+def show_more_spheres(user_id, sphere, check = None):
     menu = types.InlineKeyboardMarkup(row_width=2)
 
-    for sphere in spheres.get(sphere).keys():
-        btn = types.InlineKeyboardButton(text=show(sphere, user_id), callback_data=sphere)
-        menu.insert(btn)
-    
+    if not check:
+        for sphere in spheres.get(sphere).keys():
+            btn = types.InlineKeyboardButton(text=show(sphere, user_id), callback_data=sphere)
+            menu.insert(btn)
+        
+        return menu
+
+    else:
+        return spheres.get(sphere).get(check)
+
+
+def show_in_search_buttons():
+    menu = types.InlineKeyboardMarkup(row_width=2)
+    btn1 = types.InlineKeyboardButton(text="Работы", callback_data="work")
+    btn2 = types.InlineKeyboardButton(text="Себя", callback_data="me")
+    btn3 = types.InlineKeyboardButton(text="Друга", callback_data="friend")
+    btn4 = types.InlineKeyboardButton(text="Дивана", callback_data="sofa")
+    btn5 = types.InlineKeyboardButton(text="Другое", callback_data="other")
+    menu.add(btn1, btn2, btn3, btn4, btn5)
+
     return menu
