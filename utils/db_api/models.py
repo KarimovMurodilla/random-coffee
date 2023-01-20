@@ -9,7 +9,17 @@ class Users(Base):
 
     user_id = Column(BigInteger, primary_key=True, unique=True, autoincrement=False)
     username = Column(String(20))
-    name = Column(String(20))
-    insta = Column(String(100))
-    contact = Column(String(50))
-    status = Column(String(20), default = None)
+    name = Column(String(50))
+    age = Column(Integer)
+
+
+class Spheres(Base):
+    __tablename__ = "spheres"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger)
+
+
+
+
+    

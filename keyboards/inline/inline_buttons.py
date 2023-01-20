@@ -12,17 +12,26 @@ def show_countries(user_id):
     btn6 = types.InlineKeyboardButton(text=show("ТУРЦИЯ🇹🇷", user_id), callback_data="turkey")
     btn7 = types.InlineKeyboardButton(text=show("ИНДОНЕЗИЯ🇮🇩", user_id), callback_data="indonesia")
     btn8 = types.InlineKeyboardButton(text=show("АРМЕНИЯ🇦🇲", user_id), callback_data="armenia")
-    menu.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8)
+    done = types.InlineKeyboardButton(text='ГОТОВО ☑', callback_data="done")
+    menu.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, done)
 
     return menu
 
 
-def show_places(country, user_id):
+def show_places(countries, user_id):
     menu = types.InlineKeyboardMarkup(row_width=2)
 
-    for place in places.get(country):
-        btn = types.InlineKeyboardButton(text=show(place, user_id), callback_data=place)
-        menu.insert(btn)
+    all_places = [place for place in [places.get(country) for country in countries]]
+
+    for country in countries:
+        for place in places.get(country):
+            btn = types.InlineKeyboardButton(text=show(place, user_id), callback_data=place)
+            menu.insert(btn)
+
+    other = types.InlineKeyboardButton(text='ДРУГОЕ', callback_data="ДРУГОЕ")
+    done = types.InlineKeyboardButton(text='ГОТОВО ☑', callback_data="done")
+    menu.add(other)
+    menu.add(done)
     
     return menu
 
@@ -33,7 +42,10 @@ def show_spheres(user_id):
     for sphere in spheres.keys():
         btn = types.InlineKeyboardButton(text=show(sphere, user_id), callback_data=sphere)
         menu.insert(btn)
-    
+
+    done = types.InlineKeyboardButton(text='ГОТОВО ☑', callback_data="done")
+    menu.add(done)
+
     return menu
 
 
@@ -44,7 +56,10 @@ def show_more_spheres(user_id, sphere, check = None):
         for sphere in spheres.get(sphere).keys():
             btn = types.InlineKeyboardButton(text=show(sphere, user_id), callback_data=sphere)
             menu.insert(btn)
-        
+
+        done = types.InlineKeyboardButton(text='ГОТОВО ☑', callback_data="done")
+        menu.add(done)     
+
         return menu
 
     else:
@@ -58,7 +73,9 @@ def show_in_search_buttons():
     btn3 = types.InlineKeyboardButton(text="Друга", callback_data="friend")
     btn4 = types.InlineKeyboardButton(text="Дивана", callback_data="sofa")
     btn5 = types.InlineKeyboardButton(text="Другое", callback_data="other")
+    done = types.InlineKeyboardButton(text='ГОТОВО ☑', callback_data="done")
     menu.add(btn1, btn2, btn3, btn4, btn5)
+    menu.add(done)
 
     return menu
 
@@ -70,11 +87,15 @@ def show_emojis(user_id, emoji=None):
         for emoji in emojis_and_answers.get('all_emojis'):
             btn = types.InlineKeyboardButton(text=show(emoji, user_id), callback_data=emoji)
             menu.insert(btn)        
+        done = types.InlineKeyboardButton(text='ГОТОВО ☑', callback_data="done")
+        menu.add(done)
+        
+        return menu
 
     else:
         return emojis_and_answers.get(emoji)
 
-    return menu
+    
 
 
 def share():
