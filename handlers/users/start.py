@@ -9,12 +9,6 @@ from keyboards.inline import inline_buttons
 from keyboards.default import keyboard_buttons
 
 
-
-@dp.message_handler(content_types = 'document', state='*')
-async def bot_start(message: types.Message, state: FSMContext):
-    await message.answer_video(message.document.file_id, width=1920, height=1020, supports_streaming=True)
-
-
 @dp.message_handler(CommandStart(), state='*')
 async def bot_start(message: types.Message, state: FSMContext):
     await state.finish()
@@ -62,29 +56,44 @@ async def process_get_country(c: types.CallbackQuery, state: FSMContext):
     country = c.data
     user_id = c.from_user.id
 
-    countries = ['georgia', 'israel']
+    if country == 'back':
+        text = "Славно! А теперь выбери страну (или несколько), в которой находишься. Пока могу предложить небольшой выбор. Но это временно 😉"
+        await c.message.edit_text(text, reply_markup=inline_buttons.show_countries(user_id))
 
-    if country == 'done':
-        await c.message.answer("Ещё мне нужно знать, в каком ты городе. Ты можешь выбрать несколько городов для офлайн встреч, например",
-            reply_markup=inline_buttons.show_places(countries, user_id)
-        )
-        await Reg.next()
-
-    else:
-        pass
-
-
-@dp.callback_query_handler(state=Reg.get_place)
-async def process_get_country(c: types.CallbackQuery, state: FSMContext):
-    place = c.data
-
-    if place == 'ДРУГОЕ':
+    elif country == 'ДРУГОЕ':
         await c.message.answer("Да ладно! Что я пропустил? Окей, введи город в строке ниже. Пример: Эйлат")
         await Reg.get_place_by_hand.set()
     
-    elif place == 'done':
+    elif country == 'done':
         await c.message.answer("Я не буду открывать тебе свой возраст, а вот тебе придётся. Введи его вот в таком формате: 21.")
         await Reg.next()
+
+    elif country.startswith('C.'):
+        country_data = db.get_country(user_id, country[2:])
+
+        if country_data:
+            db.del_country(user_id, country[2:])
+            await c.message.edit_reply_markup(inline_buttons.show_countries(user_id))
+        
+        else:
+            await c.message.edit_text("Ещё мне нужно знать, в каком ты городе. Ты можешь выбрать несколько городов для офлайн встреч, например",
+                reply_markup=inline_buttons.show_places(country[2:], user_id)
+            )
+            
+            async with state.proxy() as data:
+                data['country'] = country[2:]
+
+    async with state.proxy() as data:
+        ctry = data.get('country')
+
+    response = inline_buttons.places.get(ctry) if inline_buttons.places.get(ctry) else ''
+    if c.data in response:
+        if not db.get_place(user_id, c.data):
+            db.reg_country(user_id=user_id, country=ctry, place=c.data)
+        else:
+            db.del_place(user_id, c.data)
+            
+        await c.message.edit_reply_markup(inline_buttons.show_places(ctry, user_id))
 
 
 @dp.message_handler(state=Reg.get_place_by_hand)
@@ -135,11 +144,11 @@ async def process_get_sphere(c: types.CallbackQuery, state: FSMContext):
         await Reg.get_sphere_by_hand.set()
 
 
-    elif sphere == 'done':
-        async with state.proxy() as data:
-            data['main_sphere'] = sphere
-        await c.message.answer("Ну-ка уточни, можешь выбрать несколько:", reply_markup=inline_buttons.show_more_spheres(user_id, sphere))
-        await Reg.next()
+    # elif sphere == 'done':
+    async with state.proxy() as data:
+        data['main_sphere'] = sphere
+    await c.message.edit_text("Ну-ка уточни, можешь выбрать несколько:", reply_markup=inline_buttons.show_more_spheres(user_id, sphere))
+    await Reg.next()
 
 
 @dp.callback_query_handler(state=Reg.get_more_spheres)
@@ -147,28 +156,27 @@ async def process_get_more_spheres(c: types.CallbackQuery, state: FSMContext):
     sphere = c.data
     user_id = c.from_user.id
 
+    if sphere == 'back':
+        await c.message.edit_text("Теперь выбери сферу или несколько.", reply_markup=inline_buttons.show_spheres(user_id))
+        await Reg.get_sphere.set()
+
     async with state.proxy() as data:
         main_sphere = data['main_sphere']
 
     response = inline_buttons.show_more_spheres(user_id, main_sphere, sphere)
 
     if response:
-        if response == 'ДРУГОЕ':
+        if sphere == 'ДРУГОЕ':
             await Reg.other_in_search.set()
 
         await c.message.answer(response)
-
-        # if response != 'ДРУГОЕ':
-        #     await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
-        #         reply_markup=inline_buttons.show_emojis(user_id)
-        #     )
-        #     await Reg.get_emoji.set()
 
     elif sphere == 'done':
         await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
             reply_markup=inline_buttons.show_emojis(user_id)
         )
         await Reg.get_emoji.set()
+        # c.message.from_id
 
 
 @dp.message_handler(state=Reg.get_sphere_by_hand)
