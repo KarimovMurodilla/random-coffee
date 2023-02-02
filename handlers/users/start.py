@@ -55,49 +55,68 @@ async def process_change_name(message: types.Message, state: FSMContext):
 async def process_get_country(c: types.CallbackQuery, state: FSMContext):
     country = c.data
     user_id = c.from_user.id
+    
+    if country == 'done':
+        if db.get_selected_countries(user_id):
+            await c.message.answer("Я не буду открывать тебе свой возраст, а вот тебе придётся. Введи его вот в таком формате: 21.")
+            await Reg.get_age.set()
+        else:
+            await c.answer("Вы не выбрали город!")
+
+    else:
+        country_data = db.get_country(user_id, country)
+
+        if country_data:
+            db.del_country(user_id, country)
+            await c.message.edit_reply_markup(inline_buttons.show_countries(user_id))
+        
+        else:
+            async with state.proxy() as data:
+                data['country'] = country   
+
+            await c.message.edit_text("Ещё мне нужно знать, в каком ты городе. Ты можешь выбрать несколько городов для офлайн встреч, например",
+                reply_markup=inline_buttons.show_places(country, user_id)
+            )
+            await Reg.next()
+
+
+@dp.callback_query_handler(state=Reg.get_place)
+async def process_get_place(c: types.CallbackQuery, state: FSMContext):
+    country = c.data
+    user_id = c.from_user.id
 
     if country == 'back':
         text = "Славно! А теперь выбери страну (или несколько), в которой находишься. Пока могу предложить небольшой выбор. Но это временно 😉"
         await c.message.edit_text(text, reply_markup=inline_buttons.show_countries(user_id))
-
+        await Reg.previous()
+    
     elif country == 'ДРУГОЕ':
         await c.message.answer("Да ладно! Что я пропустил? Окей, введи город в строке ниже. Пример: Эйлат")
         await Reg.get_place_by_hand.set()
-    
-    elif country == 'done':
-        await c.message.answer("Я не буду открывать тебе свой возраст, а вот тебе придётся. Введи его вот в таком формате: 21.")
-        await Reg.next()
 
-    elif country.startswith('C.'):
-        country_data = db.get_country(user_id, country[2:])
+    else:
+        async with state.proxy() as data:
+            ctry = data.get('country')
 
-        if country_data:
-            db.del_country(user_id, country[2:])
-            await c.message.edit_reply_markup(inline_buttons.show_countries(user_id))
-        
-        else:
-            await c.message.edit_text("Ещё мне нужно знать, в каком ты городе. Ты можешь выбрать несколько городов для офлайн встреч, например",
-                reply_markup=inline_buttons.show_places(country[2:], user_id)
-            )
-            
-            async with state.proxy() as data:
-                data['country'] = country[2:]
-
-    async with state.proxy() as data:
-        ctry = data.get('country')
-
-    response = inline_buttons.places.get(ctry) if inline_buttons.places.get(ctry) else ''
-    if c.data in response:
-        if not db.get_place(user_id, c.data):
-            db.reg_country(user_id=user_id, country=ctry, place=c.data)
-        else:
-            db.del_place(user_id, c.data)
-            
-        await c.message.edit_reply_markup(inline_buttons.show_places(ctry, user_id))
+        response = inline_buttons.places.get(ctry) if inline_buttons.places.get(ctry) else ''
+        if c.data in response:
+            if not db.get_place(user_id, c.data):
+                db.reg_country(user_id=user_id, country=ctry, place=c.data)
+            else:
+                db.del_place(user_id, c.data)
+                
+            await c.message.edit_reply_markup(inline_buttons.show_places(ctry, user_id))
 
 
 @dp.message_handler(state=Reg.get_place_by_hand)
 async def process_get_place_by_hand(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    place = message.text
+    async with state.proxy() as data:
+        country = data['country']
+
+    db.reg_country(user_id=user_id, country=country, place=place)
+    
     await message.answer("Я не буду открывать тебе свой возраст, а вот тебе придётся. Введи его вот в таком формате: 21.")
     await Reg.get_age.set()
 
@@ -143,8 +162,6 @@ async def process_get_sphere(c: types.CallbackQuery, state: FSMContext):
         await c.message.answer("Что я упустил? Напиши одним словом, например, Спорт")
         await Reg.get_sphere_by_hand.set()
 
-
-    # elif sphere == 'done':
     async with state.proxy() as data:
         data['main_sphere'] = sphere
     await c.message.edit_text("Ну-ка уточни, можешь выбрать несколько:", reply_markup=inline_buttons.show_more_spheres(user_id, sphere))
@@ -156,28 +173,35 @@ async def process_get_more_spheres(c: types.CallbackQuery, state: FSMContext):
     sphere = c.data
     user_id = c.from_user.id
 
-    if sphere == 'back':
-        await c.message.edit_text("Теперь выбери сферу или несколько.", reply_markup=inline_buttons.show_spheres(user_id))
-        await Reg.get_sphere.set()
-
     async with state.proxy() as data:
         main_sphere = data['main_sphere']
 
     response = inline_buttons.show_more_spheres(user_id, main_sphere, sphere)
 
-    if response:
-        if sphere == 'ДРУГОЕ':
-            await Reg.other_in_search.set()
+    if sphere == 'ДРУГОЕ':
+        await Reg.other_in_search.set()
+        await c.message.answer(response)    
 
-        await c.message.answer(response)
+    elif sphere == 'back':
+        await c.message.edit_text("Теперь выбери сферу или несколько.", reply_markup=inline_buttons.show_spheres(user_id))
+        await Reg.previous()
 
     elif sphere == 'done':
         await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
             reply_markup=inline_buttons.show_emojis(user_id)
         )
         await Reg.get_emoji.set()
-        # c.message.from_id
+    
+    else:
+        if not db.get_direction(user_id, c.data):
+            db.reg_sphere(user_id=user_id, sphere_name=main_sphere, direction_name=c.data)
 
+            if response:
+                await c.message.answer(response)    
+        else:
+            db.del_direction(user_id, c.data)
+        await c.message.edit_reply_markup(reply_markup=inline_buttons.show_more_spheres(user_id, main_sphere))
+        
 
 @dp.message_handler(state=Reg.get_sphere_by_hand)
 async def process_get_sphere_by_hand(message: types.Message, state: FSMContext):
@@ -195,8 +219,11 @@ async def process_get_sphere_by_hand(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=Reg.other_in_search)
 async def process_in_search(message: types.Message, state: FSMContext):
-    target = message.text
+    direction = message.text
     user_id = message.from_user.id
+
+    async with state.proxy() as data:
+        data['direction'] = direction
 
     await message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
         reply_markup=inline_buttons.show_emojis(user_id)

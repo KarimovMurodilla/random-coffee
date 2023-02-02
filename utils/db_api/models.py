@@ -12,7 +12,7 @@ class Users(Base):
     name = Column(String(50))
     age = Column(Integer)
 
-# TODO
+
 class Country(Base):
     __tablename__ = "country"
 
@@ -21,7 +21,7 @@ class Country(Base):
     name = Column(String(50), nullable=False)
     places = relationship("Place", cascade="all, delete")
 
-# TODO
+
 class Place(Base):
     __tablename__ = "place"
 
@@ -36,20 +36,14 @@ class Sphere(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(BigInteger)
+    name = Column(String(50))
+    directions = relationship("Direction", cascade="all, delete")
 
 
-# class User(Base):
-#     __tablename__ = 'user'
+class Direction(Base):
+    __tablename__ = "direction"
 
-#     id = Column(Integer, primary_key=True)
-#     name = Column(String(50), nullable=False)
-#     addresses = relationship("Address", backref="user")
-
-# class Address(Base):
-#     __tablename__ = 'address'
-
-#     id = Column(Integer, primary_key=True)
-#     email_address = Column(String(50), nullable=False)
-#     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-
-    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger)
+    name = Column(String(50))
+    sphere_id = Column(Integer, ForeignKey('sphere.id'), nullable=False)

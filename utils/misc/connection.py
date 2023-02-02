@@ -4,7 +4,7 @@ from sqlalchemy import update, delete
 from sqlalchemy.orm import sessionmaker
 
 from utils.db_api.base import Base
-from utils.db_api.models import Country, Place
+from utils.db_api.models import Country, Place, Sphere, Direction
 
 db_string = r"sqlite:///database.db"
 db = create_engine(db_string)  
@@ -16,7 +16,7 @@ Base.metadata.create_all(db)
 
 
 class Database:
-    # ---Countries---
+    # ---Countries-Place relationship---
     def reg_country(self, user_id, country, place):
         """Some docs"""
 
@@ -54,6 +54,11 @@ class Database:
         return country_data
 
     
+    def get_selected_countries(self, user_id):
+        response = session.query(Country).filter_by(user_id = user_id).first()
+        return response
+
+    
     def del_country(self, user_id, country):
         """Some docs"""
 
@@ -88,11 +93,79 @@ class Database:
         else:
             session.delete(place_data)
             session.commit()
+        
+
+    # ---Sphere-Direction relationship---
+    def reg_sphere(self, user_id, sphere_name, direction_name):
+        """Some docs"""
+
+        sphere_data = self.get_sphere(user_id, sphere_name)
+
+        if not sphere_data:
+            session.merge(
+                Sphere(
+                    user_id=user_id,
+                    name=sphere_name,
+                    directions=[
+                        Direction(
+                            user_id=user_id,
+                            name=direction_name
+                        )
+                    ]
+                )
+            )
+        
+        else:
+            session.merge(
+                Direction(
+                    user_id=user_id,
+                    name=direction_name,
+                    sphere_id=sphere_data.id
+                )
+            )
+
+        session.commit()
 
 
+    def get_sphere(self, user_id: int, sphere_name: str) -> Sphere:
+        """Some docs"""
+        sphere_data = session.query(Sphere).filter_by(user_id=user_id, name=sphere_name).first()
+        return sphere_data
 
 
+    def del_sphere(self, user_id, sphere_name):
+        """Some docs"""
 
+        sphere_data = self.get_sphere(user_id, sphere_name)
+        session.delete(sphere_data)
+        session.commit()
+
+
+    # ---Directions---
+    def get_direction(self, user_id, direction_name) -> Direction:
+        """Some docs"""
+        response = session.query(Direction).\
+            filter_by(user_id=user_id, name=direction_name).first()
+
+        return response
+
+    def del_direction(self, user_id, direction_name):
+        """Some docs"""
+
+        direction_data = self.get_direction(user_id, direction_name)
+
+        sphere_data = session.query(Sphere).\
+            filter_by(id = direction_data.sphere_id).first()
+
+        count = session.query(Direction).\
+            filter_by(sphere_id = direction_data.sphere_id).count()
+        
+        if count == 1:
+            self.del_sphere(user_id, sphere_data.name)
+
+        else:
+            session.delete(direction_data)
+            session.commit()
 
 
     # # ---Users---

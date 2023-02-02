@@ -12,6 +12,12 @@ def show(text, user_id, flag = None):
     elif flag == 'places':
         response = db.get_place(user_id, text)
     
+    elif flag == 'spheres':
+        response = db.get_sphere(user_id, text)
+
+    elif flag == 'more_spheres':
+        response = db.get_direction(user_id, text)
+    
     else:
         response = None
 
