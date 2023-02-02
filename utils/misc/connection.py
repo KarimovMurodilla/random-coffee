@@ -4,7 +4,7 @@ from sqlalchemy import update, delete
 from sqlalchemy.orm import sessionmaker
 
 from utils.db_api.base import Base
-from utils.db_api.models import Country, Place, Sphere, Direction
+from utils.db_api.models import Country, Place, Sphere, Direction, Emojis
 
 db_string = r"sqlite:///database.db"
 db = create_engine(db_string)  
@@ -166,6 +166,29 @@ class Database:
         else:
             session.delete(direction_data)
             session.commit()
+
+
+    # ---Emojis---
+    def reg_emoji(self, user_id, emoji):
+        """Some docs"""
+        session.merge(
+            Emojis(
+                user_id=user_id,
+                emoji=emoji
+            )
+        )
+        session.commit()
+    
+    def get_emoji(self, user_id, emoji):
+        response = session.query(Emojis).filter_by(user_id=user_id, emoji=emoji).first()
+        return response
+
+    def del_emoji(self, user_id, emoji):
+        emoji = self.get_emoji(user_id, emoji)
+        session.delete(emoji)
+        session.commit()
+
+
 
 
     # # ---Users---

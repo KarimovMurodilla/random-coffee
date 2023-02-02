@@ -47,3 +47,11 @@ class Direction(Base):
     user_id = Column(BigInteger)
     name = Column(String(50))
     sphere_id = Column(Integer, ForeignKey('sphere.id'), nullable=False)
+
+
+class Emojis(Base):
+    __tablename__ = "emojis"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger)
+    emoji = Column(String(5))

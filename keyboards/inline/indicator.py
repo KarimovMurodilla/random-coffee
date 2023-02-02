@@ -18,6 +18,9 @@ def show(text, user_id, flag = None):
     elif flag == 'more_spheres':
         response = db.get_direction(user_id, text)
     
+    elif flag == 'emojis':
+        response = db.get_emoji(user_id, text)
+    
     else:
         response = None
 

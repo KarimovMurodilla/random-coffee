@@ -112,8 +112,10 @@ async def process_get_place(c: types.CallbackQuery, state: FSMContext):
 async def process_get_place_by_hand(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     place = message.text
+
     async with state.proxy() as data:
         country = data['country']
+
 
     db.reg_country(user_id=user_id, country=country, place=place)
     
@@ -161,11 +163,18 @@ async def process_get_sphere(c: types.CallbackQuery, state: FSMContext):
     if sphere == 'ДРУГОЕ':
         await c.message.answer("Что я упустил? Напиши одним словом, например, Спорт")
         await Reg.get_sphere_by_hand.set()
+    
+    elif sphere == 'done':
+        await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
+            reply_markup=inline_buttons.show_emojis(user_id)
+        )
+        await Reg.get_emoji.set()
 
-    async with state.proxy() as data:
-        data['main_sphere'] = sphere
-    await c.message.edit_text("Ну-ка уточни, можешь выбрать несколько:", reply_markup=inline_buttons.show_more_spheres(user_id, sphere))
-    await Reg.next()
+    else:
+        async with state.proxy() as data:
+            data['main_sphere'] = sphere
+        await c.message.edit_text("Ну-ка уточни, можешь выбрать несколько:", reply_markup=inline_buttons.show_more_spheres(user_id, sphere))
+        await Reg.next()
 
 
 @dp.callback_query_handler(state=Reg.get_more_spheres)
@@ -185,12 +194,6 @@ async def process_get_more_spheres(c: types.CallbackQuery, state: FSMContext):
     elif sphere == 'back':
         await c.message.edit_text("Теперь выбери сферу или несколько.", reply_markup=inline_buttons.show_spheres(user_id))
         await Reg.previous()
-
-    elif sphere == 'done':
-        await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
-            reply_markup=inline_buttons.show_emojis(user_id)
-        )
-        await Reg.get_emoji.set()
     
     else:
         if not db.get_direction(user_id, c.data):
@@ -259,3 +262,12 @@ async def process_get_emoji(c: types.CallbackQuery, state: FSMContext):
                 disable_web_page_preview=True,
                 reply_markup=keyboard_buttons.main_menu()
         )
+    
+    else:
+        if not db.get_emoji(user_id, emoji):
+            db.reg_emoji(user_id, emoji)
+        
+        else:
+            db.del_emoji(user_id, emoji)
+        
+        await c.message.edit_reply_markup(reply_markup=inline_buttons.show_emojis(user_id))
