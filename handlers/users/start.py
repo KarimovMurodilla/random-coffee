@@ -12,10 +12,17 @@ from keyboards.default import keyboard_buttons
 @dp.message_handler(CommandStart(), state='*')
 async def bot_start(message: types.Message, state: FSMContext):
     await state.finish()
-    await message.answer(f"Давай заполним твой профиль? Твоё имя {message.from_user.first_name}",
-        reply_markup=keyboard_buttons.check_name()
-    )
-    await Reg.check_name.set()
+    user = message.from_user
+
+    if not db.get_user(user.id):
+        await message.answer(f"Давай заполним твой профиль? Твоё имя {message.from_user.first_name}",
+            reply_markup=keyboard_buttons.check_name()
+        )
+        await Reg.check_name.set()
+    
+    else:
+        user = db.get_user(user.id)
+        await message.answer(f"Привет {user.name}")
 
 
 @dp.message_handler(state=Reg.check_name)
@@ -128,6 +135,8 @@ async def process_get_age(message: types.Message, state: FSMContext):
     age = message.text
 
     if age.isdigit():
+        async with state.proxy() as data:
+            data['age'] = int(age)
         await message.answer("Расскажи, чем ты занимаешься?", reply_markup=keyboard_buttons.show_jobs())
         await Reg.next()
     
@@ -214,6 +223,8 @@ async def process_get_sphere_by_hand(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['main_sphere'] = sphere
 
+    db.reg_sphere(user_id=user_id, sphere_name=sphere, direction_name=sphere)
+
     await message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
         reply_markup=inline_buttons.show_emojis(user_id)
     )
@@ -226,7 +237,9 @@ async def process_in_search(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
 
     async with state.proxy() as data:
-        data['direction'] = direction
+        main_sphere = data['main_sphere']
+    
+    db.reg_sphere(user_id=user_id, sphere_name=main_sphere, direction_name=direction)
 
     await message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
         reply_markup=inline_buttons.show_emojis(user_id)
@@ -237,9 +250,9 @@ async def process_in_search(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(state=Reg.get_emoji)
 async def process_get_emoji(c: types.CallbackQuery, state: FSMContext):
     emoji = c.data
-    user_id = c.from_user.id
+    user = c.from_user
 
-    description = inline_buttons.show_emojis(user_id, emoji)
+    description = inline_buttons.show_emojis(user.id, emoji)
     await c.answer(description, show_alert=True)
 
     if emoji == 'done':
@@ -262,12 +275,18 @@ async def process_get_emoji(c: types.CallbackQuery, state: FSMContext):
                 disable_web_page_preview=True,
                 reply_markup=keyboard_buttons.main_menu()
         )
+
+        async with state.proxy() as data:
+            name = data.get('name') if data.get('name') else user.first_name
+            age = data.get('age')
+
+        db.reg_user(user.id, user.username, name, age)
     
     else:
-        if not db.get_emoji(user_id, emoji):
-            db.reg_emoji(user_id, emoji)
+        if not db.get_emoji(user.id, emoji):
+            db.reg_emoji(user.id, emoji)
         
         else:
-            db.del_emoji(user_id, emoji)
+            db.del_emoji(user.id, emoji)
         
-        await c.message.edit_reply_markup(reply_markup=inline_buttons.show_emojis(user_id))
+        await c.message.edit_reply_markup(reply_markup=inline_buttons.show_emojis(user.id))

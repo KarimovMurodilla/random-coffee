@@ -4,7 +4,10 @@ from sqlalchemy import update, delete
 from sqlalchemy.orm import sessionmaker
 
 from utils.db_api.base import Base
-from utils.db_api.models import Country, Place, Sphere, Direction, Emojis
+from utils.db_api.models import (
+    Country, Place, Sphere, 
+    Direction, Emojis, Users
+)
 
 db_string = r"sqlite:///database.db"
 db = create_engine(db_string)  
@@ -191,23 +194,24 @@ class Database:
 
 
 
-    # # ---Users---
-    # def reg_user(self, user_id: str, username: str, name: str, insta: str, contact: str):
-    #     """Some docs"""
-    #     session.merge(Users(user_id = user_id, 
-    #                         username = username,
-    #                         name = name,
-    #                         insta = insta,
-    #                         contact = contact
-    #                         )
-    #                     )
-    #     session.commit()
+    # ---Users---
+    def reg_user(self, user_id: str, username: str, name: str, age: int):
+        """Some docs"""
+        session.merge(
+            Users(
+                user_id = user_id, 
+                username = username,
+                name = name,
+                age = age
+            )
+        )
+        session.commit()
     
 
-    # def get_user(self, user_id) -> Users:
-    #     """Some docs"""
-    #     response = session.query(Users).filter(Users.user_id == user_id).first()
-    #     return response
+    def get_user(self, user_id) -> Users:
+        """Some docs"""
+        response = session.query(Users).filter(Users.user_id == user_id).first()
+        return response
 
     
     # def update_status(self, user_id):
