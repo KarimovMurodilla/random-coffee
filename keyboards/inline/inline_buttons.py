@@ -4,14 +4,14 @@ from .data import places, spheres, emojis_and_answers
 
 def show_countries(user_id):
     menu = types.InlineKeyboardMarkup(row_width=1)
-    btn1 = types.InlineKeyboardButton(text=show("ТАЙЛАНД🇹🇭", user_id), callback_data="thai")
-    btn2 = types.InlineKeyboardButton(text=show("ГРУЗИЯ🇬🇪", user_id), callback_data="georgia")
-    btn3 = types.InlineKeyboardButton(text=show("ИЗРАИЛЬ🇮🇱", user_id), callback_data="israel")
-    btn4 = types.InlineKeyboardButton(text=show("ОАЭ🇦🇪", user_id), callback_data="uae")
-    btn5 = types.InlineKeyboardButton(text=show("КАЗАХСТАН🇰🇿", user_id), callback_data="kazakhstan")
-    btn6 = types.InlineKeyboardButton(text=show("ТУРЦИЯ🇹🇷", user_id), callback_data="turkey")
-    btn7 = types.InlineKeyboardButton(text=show("ИНДОНЕЗИЯ🇮🇩", user_id), callback_data="indonesia")
-    btn8 = types.InlineKeyboardButton(text=show("АРМЕНИЯ🇦🇲", user_id), callback_data="armenia")
+    btn1 = types.InlineKeyboardButton(text=show("ТАЙЛАНД🇹🇭", user_id), callback_data="ТАЙЛАНД🇹🇭")
+    btn2 = types.InlineKeyboardButton(text=show("ГРУЗИЯ🇬🇪", user_id), callback_data="ГРУЗИЯ🇬🇪")
+    btn3 = types.InlineKeyboardButton(text=show("ИЗРАИЛЬ🇮🇱", user_id), callback_data="ИЗРАИЛЬ🇮🇱")
+    btn4 = types.InlineKeyboardButton(text=show("ОАЭ🇦🇪", user_id), callback_data="ОАЭ🇦🇪")
+    btn5 = types.InlineKeyboardButton(text=show("КАЗАХСТАН🇰🇿", user_id), callback_data="КАЗАХСТАН🇰🇿")
+    btn6 = types.InlineKeyboardButton(text=show("ТУРЦИЯ🇹🇷", user_id), callback_data="ТУРЦИЯ🇹🇷")
+    btn7 = types.InlineKeyboardButton(text=show("ИНДОНЕЗИЯ🇮🇩", user_id), callback_data="ИНДОНЕЗИЯ🇮🇩")
+    btn8 = types.InlineKeyboardButton(text=show("АРМЕНИЯ🇦🇲", user_id), callback_data="АРМЕНИЯ🇦🇲")
     done = types.InlineKeyboardButton(text='ГОТОВО ☑', callback_data="done")
     menu.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, done)
 

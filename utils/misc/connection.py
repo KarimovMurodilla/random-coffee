@@ -1,4 +1,6 @@
-from typing import Optional
+from typing import Union
+from dataclasses import dataclass
+
 from sqlalchemy import create_engine
 from sqlalchemy import update, delete
 from sqlalchemy.orm import sessionmaker
@@ -212,6 +214,30 @@ class Database:
         """Some docs"""
         response = session.query(Users).filter(Users.user_id == user_id).first()
         return response
+    
+
+    def get_user_data(self, user_id):
+        """Some docs"""
+        user = session.query(Users).filter(Users.user_id == user_id).first()
+        country = session.query(Country).filter(Country.user_id == user_id).all()
+        place = session.query(Place).filter(Place.user_id == user_id).all()
+        sphere = session.query(Sphere).filter(Sphere.user_id == user_id).all()
+        direction = session.query(Direction).filter(Direction.user_id == user_id).all()
+        emoji = session.query(Emojis).filter(Emojis.user_id == user_id).all()
+
+        user_data = Convertor(user, country, place, sphere, direction, emoji)
+
+        return user_data
+
+
+@dataclass
+class Convertor:
+    user: Users
+    country: Country
+    place: Place
+    sphere: Sphere
+    direction: Direction
+    emoji: Emojis
 
     
     # def update_status(self, user_id):
