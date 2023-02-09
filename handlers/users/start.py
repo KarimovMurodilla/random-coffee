@@ -3,7 +3,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.builtin import CommandStart
 
 from loader import dp, db
-from states.reg import Reg
+from states.generic import Reg
 from keyboards.default import keyboard_buttons
 
 

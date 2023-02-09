@@ -102,4 +102,15 @@ def share():
     btn1 = types.InlineKeyboardButton(text="Пригласить", url=f"tg://share?text={text}")
     menu.add(btn1)
 
-    return menu    
+    return menu
+
+
+def date_btns():
+    menu = types.InlineKeyboardMarkup(row_width=2)
+    btn1 = types.InlineKeyboardButton(text = "Неделя", callback_data="1_week")
+    btn2 = types.InlineKeyboardButton(text = "Две недели", callback_data = "2_weeks")
+    btn3 = types.InlineKeyboardButton(text = "Три недели", callback_data = "3_weeks")
+    btn4 = types.InlineKeyboardButton(text = "Месяц", callback_data = '1_month')
+    menu.add(btn1, btn2, btn3, btn4)
+
+    return menu 
