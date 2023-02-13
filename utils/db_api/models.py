@@ -1,5 +1,5 @@
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, BigInteger, Integer, String, ForeignKey
+from sqlalchemy import Column, BigInteger, Integer, String, ForeignKey, Date
 
 from utils.db_api.base import Base
 
@@ -55,3 +55,11 @@ class Emojis(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(BigInteger)
     emoji = Column(String(5))
+
+
+class ScheduledNotifications(Base):
+    __tablename__ = 'scheduled_notifications'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger)
+    date = Column(Date, nullable=False)

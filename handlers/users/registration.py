@@ -21,7 +21,7 @@ async def process_check_name(message: types.Message, state: FSMContext):
 
         user_id = message.from_user.id
         text = "Славно! А теперь выбери страну (или несколько), в которой находишься. Пока могу предложить небольшой выбор. Но это временно 😉"
-        await message.answer(text, reply_markup=inline_buttons.show_countries(user_id))
+        await message.answer(text, reply_markup=await inline_buttons.show_countries(user_id))
         await Reg.get_country.set()
 
 
@@ -38,7 +38,7 @@ async def process_change_name(message: types.Message, state: FSMContext):
 
     user_id = message.from_user.id
     text = "Славно! А теперь выбери страну (или несколько), в которой находишься. Пока могу предложить небольшой выбор. Но это временно 😉"
-    await message.answer(text, reply_markup=inline_buttons.show_countries(user_id))
+    await message.answer(text, reply_markup=await inline_buttons.show_countries(user_id))
     await Reg.next()
 
 
@@ -48,25 +48,25 @@ async def process_get_country(c: types.CallbackQuery, state: FSMContext):
     user_id = c.from_user.id
     
     if country == 'done':
-        if db.get_selected_countries(user_id):
+        if await db.get_selected_countries(user_id):
             await c.message.answer("Я не буду открывать тебе свой возраст, а вот тебе придётся. Введи его вот в таком формате: 21.")
             await Reg.get_age.set()
         else:
             await c.answer("Вы не выбрали город!")
 
     else:
-        country_data = db.get_country(user_id, country)
+        country_data = await db.get_country(user_id, country)
 
         if country_data:
-            db.del_country(user_id, country)
-            await c.message.edit_reply_markup(inline_buttons.show_countries(user_id))
+            await db.del_country(user_id, country)
+            await c.message.edit_reply_markup(await inline_buttons.show_countries(user_id))
         
         else:
             async with state.proxy() as data:
                 data['country'] = country   
 
             await c.message.edit_text("Ещё мне нужно знать, в каком ты городе. Ты можешь выбрать несколько городов для офлайн встреч, например",
-                reply_markup=inline_buttons.show_places(country, user_id)
+                reply_markup=await inline_buttons.show_places(country, user_id)
             )
             await Reg.next()
 
@@ -78,7 +78,7 @@ async def process_get_place(c: types.CallbackQuery, state: FSMContext):
 
     if country == 'back':
         text = "Славно! А теперь выбери страну (или несколько), в которой находишься. Пока могу предложить небольшой выбор. Но это временно 😉"
-        await c.message.edit_text(text, reply_markup=inline_buttons.show_countries(user_id))
+        await c.message.edit_text(text, reply_markup=await inline_buttons.show_countries(user_id))
         await Reg.previous()
     
     elif country == 'ДРУГОЕ':
@@ -89,14 +89,15 @@ async def process_get_place(c: types.CallbackQuery, state: FSMContext):
         async with state.proxy() as data:
             ctry = data.get('country')
 
-        response = inline_buttons.places.get(ctry) if inline_buttons.places.get(ctry) else ''
+        res = inline_buttons.places.get(ctry)
+        response = res if res else ''
         if c.data in response:
-            if not db.get_place(user_id, c.data):
-                db.reg_country(user_id=user_id, country=ctry, place=c.data)
+            if not await db.get_place(user_id, c.data):
+                await db.reg_country(user_id=user_id, country=ctry, place=c.data)
             else:
-                db.del_place(user_id, c.data)
+                await db.del_place(user_id, c.data)
                 
-            await c.message.edit_reply_markup(inline_buttons.show_places(ctry, user_id))
+            await c.message.edit_reply_markup(await inline_buttons.show_places(ctry, user_id))
 
 
 @dp.message_handler(state=Reg.get_place_by_hand)
@@ -108,7 +109,7 @@ async def process_get_place_by_hand(message: types.Message, state: FSMContext):
         country = data['country']
 
 
-    db.reg_country(user_id=user_id, country=country, place=place)
+    await db.reg_country(user_id=user_id, country=country, place=place)
     
     await message.answer("Я не буду открывать тебе свой возраст, а вот тебе придётся. Введи его вот в таком формате: 21.")
     await Reg.get_age.set()
@@ -144,7 +145,7 @@ async def process_get_job(message: types.Message, state: FSMContext):
 
     msg = await message.answer('ㅤ', reply_markup=types.ReplyKeyboardRemove())
     await msg.delete()
-    await message.answer("Теперь выбери сферу или несколько.", reply_markup=inline_buttons.show_spheres(user_id))
+    await message.answer("Теперь выбери сферу или несколько.", reply_markup=await inline_buttons.show_spheres(user_id))
     await Reg.next()
 
 
@@ -159,14 +160,14 @@ async def process_get_sphere(c: types.CallbackQuery, state: FSMContext):
     
     elif sphere == 'done':
         await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
-            reply_markup=inline_buttons.show_emojis(user_id)
+            reply_markup=await inline_buttons.show_emojis(user_id)
         )
         await Reg.get_emoji.set()
 
     else:
         async with state.proxy() as data:
             data['main_sphere'] = sphere
-        await c.message.edit_text("Ну-ка уточни, можешь выбрать несколько:", reply_markup=inline_buttons.show_more_spheres(user_id, sphere))
+        await c.message.edit_text("Ну-ка уточни, можешь выбрать несколько:", reply_markup=await inline_buttons.show_more_spheres(user_id, sphere))
         await Reg.next()
 
 
@@ -178,25 +179,25 @@ async def process_get_more_spheres(c: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         main_sphere = data['main_sphere']
 
-    response = inline_buttons.show_more_spheres(user_id, main_sphere, sphere)
+    response = await inline_buttons.show_more_spheres(user_id, main_sphere, sphere)
 
     if sphere == 'ДРУГОЕ':
         await Reg.other_in_search.set()
         await c.message.answer(response)    
 
     elif sphere == 'back':
-        await c.message.edit_text("Теперь выбери сферу или несколько.", reply_markup=inline_buttons.show_spheres(user_id))
+        await c.message.edit_text("Теперь выбери сферу или несколько.", reply_markup=await inline_buttons.show_spheres(user_id))
         await Reg.previous()
     
     else:
-        if not db.get_direction(user_id, c.data):
-            db.reg_sphere(user_id=user_id, sphere_name=main_sphere, direction_name=c.data)
+        if not await db.get_direction(user_id, c.data):
+            await db.reg_sphere(user_id=user_id, sphere_name=main_sphere, direction_name=c.data)
 
             if response:
                 await c.message.answer(response)    
         else:
-            db.del_direction(user_id, c.data)
-        await c.message.edit_reply_markup(reply_markup=inline_buttons.show_more_spheres(user_id, main_sphere))
+            await db.del_direction(user_id, c.data)
+        await c.message.edit_reply_markup(reply_markup=await inline_buttons.show_more_spheres(user_id, main_sphere))
         
 
 @dp.message_handler(state=Reg.get_sphere_by_hand)
@@ -207,10 +208,10 @@ async def process_get_sphere_by_hand(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['main_sphere'] = sphere
 
-    db.reg_sphere(user_id=user_id, sphere_name=sphere, direction_name=sphere)
+    await db.reg_sphere(user_id=user_id, sphere_name=sphere, direction_name=sphere)
 
     await message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
-        reply_markup=inline_buttons.show_emojis(user_id)
+        reply_markup=await inline_buttons.show_emojis(user_id)
     )
     await Reg.get_emoji.set() 
 
@@ -223,10 +224,10 @@ async def process_in_search(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         main_sphere = data['main_sphere']
     
-    db.reg_sphere(user_id=user_id, sphere_name=main_sphere, direction_name=direction)
+    await db.reg_sphere(user_id=user_id, sphere_name=main_sphere, direction_name=direction)
 
     await message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
-        reply_markup=inline_buttons.show_emojis(user_id)
+        reply_markup=await inline_buttons.show_emojis(user_id)
     )
     await Reg.next()
 
@@ -236,7 +237,7 @@ async def process_get_emoji(c: types.CallbackQuery, state: FSMContext):
     emoji = c.data
     user = c.from_user
 
-    description = inline_buttons.show_emojis(user.id, emoji)
+    description = await inline_buttons.show_emojis(user.id, emoji)
     await c.answer(description, show_alert=True)
 
     if emoji == 'done':
@@ -245,7 +246,7 @@ async def process_get_emoji(c: types.CallbackQuery, state: FSMContext):
             'я — двоюродный дядя с причудами, который живёт в хижине чудес и о котором ты '
             'узнал только сегодня 🫀   Ты, возможно, уже хочешь познакомить меня со своими '
             'друзьями. Так не робей, пришли им ссылку и расскажи, как мы сблизились за короткое время.',
-                reply_markup=inline_buttons.share()
+                reply_markup=await inline_buttons.share()
         )
 
         await asyncio.sleep(2)
@@ -264,15 +265,15 @@ async def process_get_emoji(c: types.CallbackQuery, state: FSMContext):
             name = data.get('name') if data.get('name') else user.first_name
             age = data.get('age')
 
-        db.reg_user(user.id, user.username, name, age)
+        await db.reg_user(user.id, user.username, name, age)
 
         await state.finish()
     
     else:
-        if not db.get_emoji(user.id, emoji):
-            db.reg_emoji(user.id, emoji)
+        if not await db.get_emoji(user.id, emoji):
+            await db.reg_emoji(user.id, emoji)
         
         else:
-            db.del_emoji(user.id, emoji)
+            await db.del_emoji(user.id, emoji)
         
-        await c.message.edit_reply_markup(reply_markup=inline_buttons.show_emojis(user.id))
+        await c.message.edit_reply_markup(reply_markup=await inline_buttons.show_emojis(user.id))

@@ -12,7 +12,7 @@ from keyboards.default import keyboard_buttons
 @dp.message_handler(text = 'Профиль')
 async def show_profile(message: types.Message):
     user = message.from_user
-    user_data = db.get_user_data(user.id)
+    user_data = await db.get_user_data(user.id)
 
     await message.answer(
         f"<b>Сфера:</b> {' '.join([obj.name for obj in user_data.sphere])}\n"
