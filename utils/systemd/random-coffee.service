@@ -1,11 +1,11 @@
 [Unit]
 After=network.target
-Description=SecretChannel
+Description=RandomCoffee
 
 [Service]
 Type=simple
-WorkingDirectory=/root/secret-channel/
-ExecStart=/usr/bin/python3.10 app.py
+WorkingDirectory=/root/random-coffee/
+ExecStart=/usr/bin/python3 app.py
 Restart=always
 
 [Install]

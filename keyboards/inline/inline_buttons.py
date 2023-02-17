@@ -27,8 +27,10 @@ async def show_places(country, user_id):
         menu.insert(btn)
 
     other = types.InlineKeyboardButton(text='ДРУГОЕ', callback_data="ДРУГОЕ")
+    done = types.InlineKeyboardButton(text='ГОТОВО ☑', callback_data="done")
     back = types.InlineKeyboardButton(text='◀️ НАЗАД', callback_data="back")
     menu.add(other)
+    menu.add(done)
     menu.add(back)
     
     return menu
@@ -55,8 +57,10 @@ async def show_more_spheres(user_id, sphere, check = None):
             btn = types.InlineKeyboardButton(text=await show(sphere, user_id, 'more_spheres'), callback_data=sphere)
             menu.insert(btn)
 
-        done = types.InlineKeyboardButton(text='◀️ НАЗАД', callback_data="back")
+        back = types.InlineKeyboardButton(text='◀️ НАЗАД', callback_data="back")
+        done = types.InlineKeyboardButton(text='ГОТОВО ☑', callback_data="done")
         menu.add(done)     
+        menu.add(back)     
 
         return menu
 

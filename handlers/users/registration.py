@@ -76,7 +76,14 @@ async def process_get_place(c: types.CallbackQuery, state: FSMContext):
     country = c.data
     user_id = c.from_user.id
 
-    if country == 'back':
+    if country == 'done':
+        if await db.get_selected_countries(user_id):
+            await c.message.answer("Я не буду открывать тебе свой возраст, а вот тебе придётся. Введи его вот в таком формате: 21.")
+            await Reg.get_age.set()
+        else:
+            await c.answer("Вы не выбрали город!")
+
+    elif country == 'back':
         text = "Славно! А теперь выбери страну (или несколько), в которой находишься. Пока могу предложить небольшой выбор. Но это временно 😉"
         await c.message.edit_text(text, reply_markup=await inline_buttons.show_countries(user_id))
         await Reg.previous()
@@ -185,6 +192,12 @@ async def process_get_more_spheres(c: types.CallbackQuery, state: FSMContext):
         await Reg.other_in_search.set()
         await c.message.answer(response)    
 
+    elif sphere == 'done':
+        await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
+            reply_markup=await inline_buttons.show_emojis(user_id)
+        )
+        await Reg.get_emoji.set()
+        
     elif sphere == 'back':
         await c.message.edit_text("Теперь выбери сферу или несколько.", reply_markup=await inline_buttons.show_spheres(user_id))
         await Reg.previous()

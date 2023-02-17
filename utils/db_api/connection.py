@@ -101,7 +101,7 @@ class Database:
         async with self.async_session() as session:
             session: AsyncSession
             response = await session.execute(select(Country).filter_by(user_id = user_id))
-            return response.scalars()
+            return response.all()
 
     
     async def del_country(self, user_id, country):
