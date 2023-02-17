@@ -166,10 +166,14 @@ async def process_get_sphere(c: types.CallbackQuery, state: FSMContext):
         await Reg.get_sphere_by_hand.set()
     
     elif sphere == 'done':
-        await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
-            reply_markup=await inline_buttons.show_emojis(user_id)
-        )
-        await Reg.get_emoji.set()
+        res = await db.get_user_data(user_id)
+        if res.direction.all():
+            await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
+                reply_markup=await inline_buttons.show_emojis(user_id)
+            )
+            await Reg.get_emoji.set()
+        else:
+            await c.answer("Вы ничего не выбрали!")
 
     else:
         async with state.proxy() as data:
@@ -193,11 +197,16 @@ async def process_get_more_spheres(c: types.CallbackQuery, state: FSMContext):
         await c.message.answer(response)    
 
     elif sphere == 'done':
-        await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
-            reply_markup=await inline_buttons.show_emojis(user_id)
-        )
-        await Reg.get_emoji.set()
-        
+        res = await db.get_user_data(user_id)
+        if res.direction.all():
+            await c.message.answer("Осталось совсем немного, хотя, некоторые мгновения имеют привкус вечности. Выбери свои увлечения, можно несколько.", 
+                reply_markup=await inline_buttons.show_emojis(user_id)
+            )
+            await Reg.get_emoji.set()
+        else:
+            await c.answer("Вы ничего не выбрали!")
+            
+
     elif sphere == 'back':
         await c.message.edit_text("Теперь выбери сферу или несколько.", reply_markup=await inline_buttons.show_spheres(user_id))
         await Reg.previous()
