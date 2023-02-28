@@ -68,7 +68,7 @@ async def show_more_spheres(user_id, sphere, check = None):
         return spheres.get(sphere).get(check)
 
 
-async def show_in_search_buttons():
+def show_in_search_buttons():
     menu = types.InlineKeyboardMarkup(row_width=2)
     btn1 = types.InlineKeyboardButton(text="Работы", callback_data="work")
     btn2 = types.InlineKeyboardButton(text="Себя", callback_data="me")
@@ -97,10 +97,8 @@ async def show_emojis(user_id, emoji=None):
     else:
         return emojis_and_answers.get(emoji)
 
-    
 
-
-async def share():
+def share():
     text = '@RandomCoffeeBot: Бот для нахождения новых друзей'
     menu = types.InlineKeyboardMarkup()
     btn1 = types.InlineKeyboardButton(text="Пригласить", url=f"tg://share?text={text}")
@@ -109,7 +107,7 @@ async def share():
     return menu
 
 
-async def date_btns():
+def date_btns():
     menu = types.InlineKeyboardMarkup(row_width=2)
     btn1 = types.InlineKeyboardButton(text = "Неделя", callback_data="1_week")
     btn2 = types.InlineKeyboardButton(text = "Две недели", callback_data = "2_weeks")

@@ -1,7 +1,8 @@
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, BigInteger, Integer, String, ForeignKey, Date
+from sqlalchemy import Column, BigInteger, Integer, String, ForeignKey, DateTime
 
 from utils.db_api.base import Base
+from datetime import datetime
 
 
 class Users(Base):
@@ -62,4 +63,6 @@ class ScheduledNotifications(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(BigInteger)
-    date = Column(Date, nullable=False)
+    trigger = Column(String(10))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    scheduled_date = Column(DateTime)

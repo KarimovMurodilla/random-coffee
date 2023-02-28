@@ -29,12 +29,26 @@ async def process_questions(message: types.Message):
 
 
 @dp.callback_query_handler(state=Questions.step2)
-async def get_next_notification_date(c: types.CallbackQuery, state: FSMContext):
-    async with state.proxy() as data:
-        data['next_date'] = c.data
-    
+async def get_next_notification_date(c: types.CallbackQuery, state: FSMContext):    
     await c.message.delete()
     await c.message.answer("Хорошо, тогда до встречи!")
+
+    deltas = {
+        '1_week': datetime.timedelta(weeks=1),
+        '2_weeks': datetime.timedelta(weeks=2),
+        '3_weeks': datetime.timedelta(weeks=3),
+        '1_month': datetime.timedelta(days=31)
+    }
+
+    now = datetime.datetime.now()
+    scheduled_date = now + deltas[c.data]
+
+    await db.reg_new_schedule_date(
+        user_id = c.from_user.id,
+        trigger = c.data,
+        scheduled_date = scheduled_date
+    )
+
     await state.finish()
 
 

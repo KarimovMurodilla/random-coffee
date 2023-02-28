@@ -1,12 +1,11 @@
-import aiosqlite
-
-from typing import Union, List
+from typing import List
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import create_engine
-from sqlalchemy import update, delete, select, func
+from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from utils.db_api.base import Base
 from utils.db_api.models import (
@@ -15,23 +14,7 @@ from utils.db_api.models import (
     ScheduledNotifications
 )
 
-
-# db_string = r"sqlite+aiosqlite:///database.db"
-# engine = create_engine(db_string) 
-
-# Session = sessionmaker(engine)  
-# session = Session()
-
-# Base.metadata.create_all(engine)
-
-
-# Test imports
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.ext.asyncio import AsyncSession
-
-# engine = create_async_engine(db_string) 
-# async_session = sessionmaker(engine, expire_on_commit=False, class_ = AsyncSession)
-
+from .mixins import UserData
 
 
 class Database:
@@ -283,7 +266,7 @@ class Database:
             return response
     
 
-    async def get_user_data(self, user_id):
+    async def get_user_data(self, user_id) -> UserData:
         """Some docs"""
         async with self.async_session() as session:
             session: AsyncSession
@@ -295,30 +278,27 @@ class Database:
             direction = await session.execute(select(Direction).where(Direction.user_id == user_id))
             emoji = await session.execute(select(Emojis).where(Emojis.user_id == user_id))
 
-        user_data = _Convertor(user, country.scalars(), place.scalars(), sphere.scalars(), direction.scalars(), emoji.scalars())
+        user_data = UserData(user, country.scalars(), place.scalars(), sphere.scalars(), direction.scalars(), emoji.scalars())
 
         return user_data
     
 
     # ---ScheduledNotifications---
-    async def reg_new_schedule_date(self, user_id: int, date: datetime):
+    async def reg_new_schedule_date(self, user_id: int, trigger: str, scheduled_date: datetime):
+        """Some docs"""
         async with self.async_session() as session:
+            session: AsyncSession
             await session.merge(
                 ScheduledNotifications(
                     user_id = user_id,
-                    date = date
+                    trigger = trigger,
+                    scheduled_date = scheduled_date
                 )
             )
             await session.commit()
+    
+    # async def get_
 
-@dataclass
-class _Convertor:
-    user: Users
-    country: List[Country]
-    place: List[Place]
-    sphere: List[Sphere]
-    direction: List[Direction]
-    emoji: List[Emojis]
 
     
     # async def update_status(self, user_id):
