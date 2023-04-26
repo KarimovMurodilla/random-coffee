@@ -259,6 +259,12 @@ async def process_get_emoji(c: types.CallbackQuery, state: FSMContext):
     emoji = c.data
     user = c.from_user
 
+
+    async with state.proxy() as data:
+        name = data.get('name') if data.get('name') else user.first_name
+        age = data.get('age')
+        country = data.get('country')
+
     if emoji == 'done':
         res = await db.get_user_data(user.id)
         if res.emoji.all():
@@ -282,9 +288,6 @@ async def process_get_emoji(c: types.CallbackQuery, state: FSMContext):
                     reply_markup=keyboard_buttons.main_menu()
             )
 
-            async with state.proxy() as data:
-                name = data.get('name') if data.get('name') else user.first_name
-                age = data.get('age')
 
             await db.reg_user(user.id, user.username, name, age)
 
@@ -294,11 +297,16 @@ async def process_get_emoji(c: types.CallbackQuery, state: FSMContext):
             await c.answer("Вы ничего не выбрали!")
     
     else:
+        specials = ['ГРУЗИЯ🇬🇪', 'ТАЙЛАНД🇹🇭', 'ИЗРАИЛЬ🇮🇱', 'ТУРЦИЯ🇹🇷', 'ИНДОНЕЗИЯ🇮🇩']
         if not await db.get_emoji(user.id, emoji):
             description = await inline_buttons.show_emojis(user.id, emoji)
-            await c.answer(description, show_alert=True)
-            await db.reg_emoji(user.id, emoji)
-        
+            if country in specials and emoji == '🏄' or emoji == '🏊':
+                await c.answer(description, show_alert=True)
+            
+            else:
+                await c.answer(description, show_alert=True)
+                await db.reg_emoji(user.id, emoji)
+    
         else:
             await db.del_emoji(user.id, emoji)
         
