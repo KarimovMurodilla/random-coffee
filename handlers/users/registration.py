@@ -269,10 +269,7 @@ async def process_get_emoji(c: types.CallbackQuery, state: FSMContext):
         res = await db.get_user_data(user.id)
         if res.emoji.all():
             await c.message.answer(
-                'Знаешь, я внезапно понял одну вещь… Я уже столько знаю о тебе. Мы как семья, '
-                'я — двоюродный дядя с причудами, который живёт в хижине чудес и о котором ты '
-                'узнал только сегодня 🫀   Ты, возможно, уже хочешь познакомить меня со своими '
-                'друзьями. Так не робей, пришли им ссылку и расскажи, как мы сблизились за короткое время.',
+                'Отправляй это сообщение другу!',
                     reply_markup=inline_buttons.share()
             )
 
@@ -300,12 +297,13 @@ async def process_get_emoji(c: types.CallbackQuery, state: FSMContext):
         specials = ['ГРУЗИЯ🇬🇪', 'ТАЙЛАНД🇹🇭', 'ИЗРАИЛЬ🇮🇱', 'ТУРЦИЯ🇹🇷', 'ИНДОНЕЗИЯ🇮🇩']
         if not await db.get_emoji(user.id, emoji):
             description = await inline_buttons.show_emojis(user.id, emoji)
+            await db.reg_emoji(user.id, emoji)
+            
             if country in specials and emoji == '🏄' or emoji == '🏊':
                 await c.answer(description, show_alert=True)
             
             else:
                 await c.answer(description, show_alert=True)
-                await db.reg_emoji(user.id, emoji)
     
         else:
             await db.del_emoji(user.id, emoji)

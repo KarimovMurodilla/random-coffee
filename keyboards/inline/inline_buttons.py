@@ -99,7 +99,7 @@ async def show_emojis(user_id, emoji=None):
 
 
 def share():
-    text = '@RandomCoffeeBot: Бот для нахождения новых друзей'
+    text = 'Эй! Привет! Я крутой бот для бизнес-знакомств по всему миру '
     menu = types.InlineKeyboardMarkup()
     btn1 = types.InlineKeyboardButton(text="Пригласить", url=f"tg://share?text={text}")
     menu.add(btn1)
