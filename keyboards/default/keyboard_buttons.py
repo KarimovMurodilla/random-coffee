@@ -29,7 +29,8 @@ def main_menu():
     btn2 = types.KeyboardButton("Поддержка")
     btn3 = types.KeyboardButton("Настройки")
     btn4 = types.KeyboardButton("one-click")
-    menu.add(btn1, btn2, btn3, btn4)
+    btn5 = types.KeyboardButton("Далее")
+    menu.add(btn1, btn2, btn3, btn4, btn5)
 
     return menu
 
